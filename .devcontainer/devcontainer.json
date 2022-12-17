@@ -1,0 +1,14 @@
+{
+    "name": "CodeRedwood CentOS7",
+    "build": {
+        "dockerfile": "Dockerfile"
+    },
+    "customizations": {
+        "vscode": {
+            "extensions": [
+				"shakram02.bash-beautify"
+			]
+        }
+    },
+    "postCreateCommand": "bash dependencies.sh && bash git-install-upgrade.sh"
+}
