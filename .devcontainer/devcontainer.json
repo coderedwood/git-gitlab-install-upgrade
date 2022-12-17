@@ -1,0 +1,14 @@
+{
+    "name": "CodeRedwood CentOS7",
+    "build": {
+        "dockerfile": "Dockerfile"
+    },
+    "customizations": {
+        "vscode": {
+            "extensions": [
+				"timonwong.shellcheck",
+				"shakram02.bash-beautify"
+			]
+        }
+    }
+}
