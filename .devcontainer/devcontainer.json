@@ -9,6 +9,6 @@
 				"shakram02.bash-beautify"
 			]
         }
-    },
-    "postCreateCommand": "bash dependencies.sh && bash git-install-upgrade.sh"
+     }//,
+    // "postCreateCommand": "bash git-install-upgrade.sh"
 }
