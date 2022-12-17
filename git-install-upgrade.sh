@@ -1,0 +1,1 @@
+##########This is a script to install git from source on CentOS 7 / RedHat 7 ##############
