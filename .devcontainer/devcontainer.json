@@ -6,9 +6,9 @@
     "customizations": {
         "vscode": {
             "extensions": [
-				"timonwong.shellcheck",
 				"shakram02.bash-beautify"
 			]
         }
-    }
+    },
+    "postCreateCommand": "bash dependencies.sh && bash git-install-upgrade.sh"
 }
