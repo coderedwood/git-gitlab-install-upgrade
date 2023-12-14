@@ -1,5 +1,5 @@
 {
-    "name": "CodeRedwood CentOS7",
+    "name": "CodeRedwood CentOS8",
     "build": {
         "dockerfile": "Dockerfile"
     },
@@ -10,5 +10,5 @@
 			]
         }
      }//,
-    // "postCreateCommand": "bash git-install-upgrade.sh"
+     //"postCreateCommand": "bash git-install-upgrade.sh"
 }
