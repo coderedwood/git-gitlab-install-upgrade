@@ -10,6 +10,7 @@ install_gitlab(){
     curl -O https://packages.gitlab.com/install/repositories/gitlab/gitlab-ce/script.rpm.sh
     chmod +x script.rpm.sh
     os=el dist=8 ./script.rpm.sh
+    dnf install gitlab-ce -y
 }
 
 #Add exceptions to http and https ports
