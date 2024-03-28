@@ -21,6 +21,6 @@ enable_web(){
 
 #Main script
 install_postfix
-install_gitlab-ce
+install_gitlab
 enable_web
 echo "Installation complete, please configure the gitlab.rb file manually"
