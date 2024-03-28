@@ -2,7 +2,7 @@
 install_postfix(){
     dnf update
     dnf install postfix -y
-    systemctl enable --now postfix
+    sudo systemctl enable --now postfix
 }
 
 #Install Gitlab
@@ -10,14 +10,14 @@ install_gitlab(){
     curl -O https://packages.gitlab.com/install/repositories/gitlab/gitlab-ce/script.rpm.sh
     chmod +x script.rpm.sh
     os=el dist=8 ./script.rpm.sh
-    dnf install gitlab-ce -y
+    sudo dnf install gitlab-ce -y
 }
 
 #Add exceptions to http and https ports
 enable_web(){
-    firewall-cmd --permanent --add-service=http
-    firewall-cmd --permanent --add-service=https
-    systemctl reload firewalld
+    sudo firewall-cmd --permanent --add-service=http
+    sudo firewall-cmd --permanent --add-service=https
+    sudo systemctl reload firewalld
 }
 
 #Main script
