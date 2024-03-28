@@ -6,7 +6,7 @@ install_postfix(){
 }
 
 #Install Gitlab
-install_gitlab-ce(){
+install_gitlab(){
     curl -O https://packages.gitlab.com/install/repositories/gitlab/gitlab-ce/script.rpm.sh
     chmod +x script.rpm.sh
     os=el dist=8 ./script.rpm.sh
