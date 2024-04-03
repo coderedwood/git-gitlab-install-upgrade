@@ -4,10 +4,10 @@
 ####################### Get Git via release tag via http #########################################
 # TAG=$(curl -s https://api.github.com/repos/git/git/tags | grep -i "name" | awk -F '"' '{print $4}' | head -n 1)
 # echo "Fetching the latest git release"
-# curl -OJL "https://github.com/git/git/archive/refs/tags/${TAG}.tar.gz"
+# curl -L "https://github.com/git/git/archive/refs/tags/${TAG}.tar.gz" > "git-${TAG}.tar.gz"
 # echo "Extracting tar file";
-# tar xzfv v*.tar.gz;
-# rm -rf v*tar.gz
+# tar -xzfv git*.tar.gz;
+# rm -rf git*tar.gz
 ####################### Build Git from Source Section ############################################
 echo "cloning git project from master repository since base git is installed from dependecnies";
 git clone https://github.com/git/git.git;
@@ -16,4 +16,4 @@ cd git*/;
 echo "Building from source files";
 make configure;
 ./configure --prefix=/usr/local;
-make all && make install;
+sudo make all && sudo make install;
