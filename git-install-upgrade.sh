@@ -1,15 +1,15 @@
 ##########This is a script to install git from source on CentOS 7 / RedHat 7 ##############
-# Uncomment and comment accordingly lines 5-10 or lines 12 - 13 for version specific source
-# Line 13 pulls a larger directory vs pulling a release tag via lines 5-7
+# Uncomment and comment accordingly lines 30-31 or lines 32 for version specific source
+# Line 32 pulls a larger directory vs pulling a release tag via lines 30-31
 ####################### Get Git via release tag via http #########################################
-download_git(){
 TAG=$(curl -s https://api.github.com/repos/git/git/tags | grep -i "name" | awk -F '"' '{print $4}' | head -n 1)
-echo "Fetching the latest git release"
-curl -L "https://github.com/git/git/archive/refs/tags/${TAG}.tar.gz" > "git-${TAG}.tar.gz";
+download_git(){
+echo "Fetching the latest Git release"
+curl -L "https://github.com/git/git/archive/refs/tags/${TAG}.tar.gz" -o "git-${TAG}.tar.gz"
 }
 extract_git(){
 echo "Extracting tar file";
-tar -xzfv git*.tar.gz;
+tar -xzvf "git-${TAG}.tar.gz"
 rm -rf git*tar.gz
 }
 ####################### Build Git from Source Section ############################################
