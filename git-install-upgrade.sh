@@ -1,5 +1,5 @@
 ##########This is a script to install git from source on CentOS 7 / RedHat 7 ##############
-# Uncomment and comment accordingly lines 4 & 5 while lines 7 - 11 for version specific download
+# Uncomment and comment accordingly lines 5-10 or lines 12 - 13 for version specific source
 # Line 13 pulls a larger directory vs pulling a release tag via lines 5-7
 ####################### Get Git via release tag via http #########################################
 # TAG=$(curl -s https://api.github.com/repos/git/git/tags | grep -i "name" | awk -F '"' '{print $4}' | head -n 1)
