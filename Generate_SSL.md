@@ -24,8 +24,8 @@ openssl x509 -req -days 3650 -in cert.csr -signkey cert.key -out cert.crt
 - 'CN' is the common name or the simplified host name
 ```bash
 openssl req -new -newkey rsa:4096 -days 365 -nodes -x509 \
-    -subj "/C=GB/ST=London/L=London/O=Global Security/OU=R&D Department/CN=example.com" \
-    -keyout cert.key  -out cert.crt
+-subj "/C=GB/ST=London/L=London/O=Global Security/OU=R&D Department/CN=example.com" \
+-keyout cert.key  -out cert.crt
 ```
 ### Further documentation can be viewed at
 [OpenSSL Website x509](https://www.openssl.org/docs/man1.1.1/man1/x509.html)
