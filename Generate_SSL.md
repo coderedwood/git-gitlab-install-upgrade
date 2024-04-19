@@ -18,6 +18,24 @@ openssl req -new -x509 -sha256 -days 3650 -key ca-cert.key -out ca-cert.crt
 openssl x509 -in ca-cert.crt -text
 ```
 
+### In the '-subj' object in the commands to follow, please note the following:
+- 'C' is 2 character code for the country
+- 'ST' is the country's State/Province
+- 'L' is the city location
+- 'O' is the name of your organisation
+- 'OU' is the organizational unit
+- 'CN' is the common name or the simplified host name
+
+## One step version of the above CA cert (aes not supported in private key generatin in the request method, elliptic curve used in example)
+```bash
+openssl req -new -newkey rsa:4096 -newkey ec -pkeyopt ec_paramgen_curve:prime256v1 \
+-days 3650 -x509 -sha256 \
+-subj "/C=GB/ST=London/L=London/O=Global Security/OU=R&D Department/CN=example.com" \
+-keyout ca-cert.key -out ca-cert.crt
+```
+
+- Enter a passphrase to complete the generation
+
 ## Generation of a self-signed SSL certificate using the CA:
 
 __STEP 1__: Create the server private key
@@ -46,26 +64,23 @@ echo cert.crt > ssl-cert.crt
 ```bash
 echo ca-cert.crt > ssl-cert.crt
 ```
+
+### Chained in one step we have
+```bash
+openssl genrsa -out cert.key 4096 && \
+openssl req -new -sha256 -subj "/CN=<<servername>>" -key cert.key -out cert.csr && \
+echo "subjectAltName=DNS:<<servername>>,IP:<<serverIP>>" >> extfile.cnf && \
+openssl x509 -req -days 3650 -in cert.csr -CA ca-cert.crt -CAkey ca-cert.key --extfile \
+extfile.cnf -out cert.crt -CAcreateserial && echo cert.crt > ssl-cert.crt && \
+echo ca-cert.crt > ssl-cert.crt
+```
+
 ## Important final outputs from the above section are:
 - ca-cert.key (this can be used to sign other self-signed certificates for additiona server nodes)
 - ca-cert.crt (This should be added to the Trusted Root Certificates of the client nodes to validate any issued self-signed certs from your private CA)
 - cert.key (to be paired with ssl-cert on server node)
 - ssl-cert.crt (self-signed certificate to be paired with cert.key, issued on node request for ssl validation)
 
-# TO REVIEW STEPS Below for reduced/1-step procedure to facilitate the above methods
 
-## Generation of a self-signed SSL certificate involves a simple 1-step procedure
-### In the 'subj' object in the command to follow, please note the following:
-- 'C' is 2 character code for the country
-- 'ST' is the country's State/Province
-- 'L' is the city location
-- 'O' is the name of your organisation
-- 'OU' is the organizational unit
-- 'CN' is the common name or the simplified host name
-```bash
-openssl req -new -newkey rsa:4096 -days 365 -nodes -x509 \
--subj "/C=GB/ST=London/L=London/O=Global Security/OU=R&D Department/CN=example.com" \
--keyout cert.key  -out cert.crt
-```
 ### Further documentation can be viewed at
 [OpenSSL Website x509](https://www.openssl.org/docs/man1.1.1/man1/x509.html)
