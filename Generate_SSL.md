@@ -18,7 +18,7 @@ openssl req -new -x509 -sha256 -days 3650 -key ca-cert.key -out ca-cert.crt
 openssl x509 -in ca-cert.crt -text
 ```
 
-## Generation of a self-signed SSL certificate using the CA involves a simple 3-step procedure:
+## Generation of a self-signed SSL certificate using the CA:
 
 __STEP 1__: Create the server private key
 ```bash
@@ -28,18 +28,18 @@ __STEP 2__: Create the certificate signing request (CSR) (will prompt for values
 ```bash
 openssl req -new -sha256 -subj "/CN=<<servername>>" -key cert.key -out cert.csr
 ```
-__Optional__: Create a config file for the alternate names for the node for the cert
+__STEP 3__: Create a config file for the alternate names for the node for the cert
 ```bash
 echo "subjectAltName=DNS:<<DNSname>>,IP:<<serverip>>" >> extfile.cnf
 ```
 
-__STEP 3__: Sign the certificate using the private key and CSR
+__STEP 4__: Sign the certificate using the private key and CSR
 ```bash
 openssl x509 -req -days 3650 -in cert.csr -CA ca-cert.crt -CAkey ca-cert.key --extfile extfile.cnf -out cert.crt -CAcreateserial
 ```
 - Enter passphrase for the CA key you created to complete generating the cert
 
-__STEP 4__: Create the full certificate chain by chaining the self-signed cert with the CA cert into one file in the order listed.
+__STEP 5__: Create the full certificate chain by chaining the self-signed cert with the CA cert into one file in the order listed.
 ```bash
 echo cert.crt > ssl-cert.crt
 ```
@@ -52,7 +52,7 @@ echo ca-cert.crt > ssl-cert.crt
 - cert.key (to be paired with ssl-cert on server node)
 - ssl-cert.crt (self-signed certificate to be paired with cert.key, issued on node request for ssl validation)
 
-# Below reduced/1-step procedure to be updated to facilitate the above methods
+# TO REVIEW STEPS Below for reduced/1-step procedure to facilitate the above methods
 
 ## Generation of a self-signed SSL certificate involves a simple 1-step procedure
 ### In the 'subj' object in the command to follow, please note the following:
