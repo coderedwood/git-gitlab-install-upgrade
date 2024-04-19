@@ -1,6 +1,6 @@
 # Instructions on generating a self signed certificate using openssl
 
-## Generate a Private Certificate Authority
+# 1. Generate a Private Certificate Authority
 - Generate the CA key using desired encryption algorithm (example uses aes 256 bit with a 4096 bit rsa)
 ```bash
 openssl genrsa -aes256 -out ca-cert.key 4096
@@ -36,7 +36,7 @@ openssl req -new -newkey rsa:4096 -newkey ec -pkeyopt ec_paramgen_curve:prime256
 
 - Enter a passphrase to complete the generation
 
-## Generation of a self-signed SSL certificate using the CA:
+# 2. Generation of a self-signed SSL certificate using the CA:
 
 __STEP 1__: Create the server private key
 ```bash
@@ -81,6 +81,9 @@ echo ca-cert.crt > ssl-cert.crt
 - cert.key (to be paired with ssl-cert on server node)
 - ssl-cert.crt (self-signed certificate to be paired with cert.key, issued on node request for ssl validation)
 
+# Usage approach
+- Generate CA root cert in Main step 1. Only need to do this once.
+- Generate individual ssl certificates for the different nodes. Use Main step 2 repeatedly for signing with the CA root.
 
 ### Further documentation can be viewed at
 [OpenSSL Website x509](https://www.openssl.org/docs/man1.1.1/man1/x509.html)
