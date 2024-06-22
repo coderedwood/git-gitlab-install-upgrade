@@ -51,8 +51,8 @@ enable_web(){
 
 #Main script procedure
 install_dependecies;
-# fetch_git_curl
-fetch_git_clone
+fetch_git_curl
+# fetch_git_clone
 install_git;
 install_gitlab;
 enable_web;
