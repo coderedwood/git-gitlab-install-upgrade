@@ -1,4 +1,4 @@
-# git-install-upgrade
+# git-gitlab-install-upgrade
 This is a set of simple scripts for use with CentOS / Oracle Linux /RedHat for building git from source
 This was done as part of a project to install a self-managed instance of Gitlab Community edition.
 
@@ -6,8 +6,9 @@ This was done as part of a project to install a self-managed instance of Gitlab 
 - dependencies.sh (Installs dependencies for building git from source code)
 - git-install-upgrade.sh (Fetches latest git source code, compiles and installs)
 - install-gitlab.sh (Installs Gitlab official repository and install Gitlab Community Edition)
+- upgrade-gitlab.sh (Upgrades the gitlab installation by taking the versions as arguments separated by spaces)
 
-## Installation solution from scratch (Combines all above steps)
+## Installation solution from scratch (Combines all above steps excluding the upgrade)
 - optimised_install.sh (Installs Dependencies, Git and Gitlab)
 
 ## Upgrading your gitlab installation
