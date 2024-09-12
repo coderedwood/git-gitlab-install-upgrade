@@ -2,8 +2,12 @@
 # Uncomment and comment accordingly lines 30-31 or lines 32 for version specific source
 # Line 32 pulls a larger directory vs pulling a release tag via lines 30-31
 ####################### Get Git via release tag via http #########################################
+fetch_git_version(){
 TAG=$(curl -s https://api.github.com/repos/git/git/tags | grep -i "name" | awk -F '"' '{print $4}' | head -n 1)
+echo $TAG
+}
 download_git(){
+TAG=$(fetch_git_version);
 echo "Fetching the latest Git release"
 curl -L "https://github.com/git/git/archive/refs/tags/${TAG}.tar.gz" -o "git-${TAG}.tar.gz"
 }
