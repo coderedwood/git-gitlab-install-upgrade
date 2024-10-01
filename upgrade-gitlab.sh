@@ -22,14 +22,22 @@ upgrade_git() {
         git_version=$(git --version | awk '{print $3}')
         fetch_version=$(fetch_git_version)
 
-        # Compare versions using a helper function or tool
-        if [ "$(printf '%s\n' "$fetch_version" "$git_version" | sort -V | head -n1)" != "$git_version" ]; then
-            download_git
+        # Compare installed version with the fetched version
+        if [ "$(printf '%s\n' "$git_version" "$fetch_version" | sort -V | head -n1)" != "$git_version" ]; then
+            echo "Updating Git from version $git_version to $fetch_version..."
+            download_git;
+            extract_git;
+            install_git;
+            remove_git_folder;
         else
-            echo "Git is up-to-date."
+            echo "Git is up-to-date (version $git_version)."
         fi
     else
-        echo "Git is not installed."
+        echo "Git is not installed. Installing Git..."
+        download_git;
+        extract_git;
+        install_git;
+        remove_git_folder;
     fi
 }
 

@@ -14,7 +14,7 @@ curl -L "https://github.com/git/git/archive/refs/tags/${TAG}.tar.gz" -o "git-${T
 extract_git(){
 echo "Extracting tar file";
 tar -xzvf "git-${TAG}.tar.gz"
-rm -rf git*tar.gz
+rm git*tar.gz
 }
 ####################### Build Git from Source Section ############################################
 clone_git(){
@@ -29,9 +29,13 @@ make configure;
 ./configure --prefix=/usr/local;
 sudo make all && sudo make install;
 }
+remove_git_folder(){
+    sudo rm -rf git*/
+}
 
 #Main routine
-download_git;
-extract_git;
+# download_git;
+# extract_git;
 #clone_git;
-install_git;
+# install_git;
+# remove_git_folder;
