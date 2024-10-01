@@ -70,3 +70,4 @@ upgrade_git() {
 # for version in "$@"; do
 #     install_gitlab "$version"
 # done
+upgrade_git;
