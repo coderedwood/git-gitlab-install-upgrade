@@ -32,6 +32,7 @@ upgrade_git() {
             extract_git
             install_git
             remove_git_folder
+            echo "Git has been upgraded to version $fetch_version"
         else
             echo "Git is up-to-date (version $git_version)."
         fi
@@ -45,40 +46,54 @@ upgrade_git() {
 }
 
 
-# check_background_migrations(){
-#     echo 'Checking for background migrations'
-#     sudo gitlab-rake gitlab:elastic:list_pending_migrations
-# }
+check_background_migrations(){
+    echo 'Checking for background migrations'
+    sudo gitlab-psql -c "SELECT job_class_name, table_name, column_name, job_arguments FROM batched_background_migrations WHERE status NOT IN(3, 6);"
+}
 
-# check_gitlab_version(){
-#     echo 'Checking Gitlab Version'
-#     sudo grep gitlab-ce /opt/gitlab/version-manifest.txt
-# }
+check_gitlab_version(){
+    echo 'Checking Gitlab Version'
+    sudo grep gitlab-ce /opt/gitlab/version-manifest.txt
+}
 
-# # Check if running as root
-# if [[ $EUID -ne 0 ]]; then
-#    echo "This script must be run as root"
-#    exit 1
-# fi
+# Check if running as root
+if [[ $EUID -ne 0 ]]; then
+   echo "This script must be run as root"
+   exit 1
+fi
 
-# # Function to install GitLab CE
-# install_gitlab() {
-#     local version=$1
-#     echo "Installing GitLab CE version $version"
+# Function to install GitLab CE
+install_gitlab() {
+    local version=$1
+    echo "Installing GitLab CE version $version"
 
-#     # Replace the URL with the appropriate GitLab CE package URL
-#     #curl -sS https://packages.gitlab.com/install/repositories/gitlab/gitlab-ce/script.rpm.sh | sudo bash
-#     sudo yum install -y gitlab-ce-$version
+    # Replace the URL with the appropriate GitLab CE package URL
+    #curl -sS https://packages.gitlab.com/install/repositories/gitlab/gitlab-ce/script.rpm.sh | sudo bash
+    sudo yum install -y gitlab-ce-$version
 
-#     # Start GitLab service
-#     sudo gitlab-ctl restart
+    # Start GitLab service
+    sudo gitlab-ctl restart
 
-#     # Check GitLab status
-#     sudo gitlab-ctl status
-# }
+    # Check GitLab status
+    sudo gitlab-ctl status
+}
 
 # # Iterate through each version passed as argument
 # for version in "$@"; do
 #     install_gitlab "$version"
 # done
+upgrade_gitlab(){
+# Prompt user for input
+echo "Enter the GitLab CE versions you want to install, separated by spaces:"
+read -r input_versions
+
+# Iterate through each version entered by the user
+for version in $input_versions; do
+    install_gitlab "$version"
+done
+}
+
 upgrade_git;
+check_background_migrations;
+check_gitlab_version;
+upgrade_gitlab;
