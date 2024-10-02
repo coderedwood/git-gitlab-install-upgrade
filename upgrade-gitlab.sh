@@ -17,37 +17,6 @@
 source ./git-install-upgrade.sh
 
 # Function to upgrade Git
-# upgrade_git() {
-#     if command -v git >/dev/null 2>&1; then
-#         git_version=$(git --version | awk '{print $3}')
-#         fetch_version=$(fetch_git_version)
-
-#         # Compare installed version with the fetched version
-#         if [ "$(printf '%s\n' "$git_version" "$fetch_version" | sort -V | head -n1)" != "$git_version" ]; then
-#             echo "Updating Git from version $git_version to $fetch_version..."
-#             download_git;
-#             extract_git;
-#             install_git;
-#             remove_git_folder;
-#         else
-#             echo "Git is up-to-date (version $git_version)."
-#         fi
-#     else
-#         echo "Git is not installed. Installing Git..."
-#         download_git;
-#         extract_git;
-#         install_git;
-#         remove_git_folder;
-#     fi
-# }
-
-
-# Function to fetch the latest Git version
-fetch_git_version() {
-    curl -s https://api.github.com/repos/git/git/tags | grep '"name":' | grep -Eo '[0-9]+\.[0-9]+\.[0-9]+' | head -n 1
-}
-
-# Function to upgrade Git
 upgrade_git() {
     if command -v git >/dev/null 2>&1; then
         git_version=$(git --version | awk '{print $3}')
