@@ -69,13 +69,16 @@ install_gitlab() {
 
     # Replace the URL with the appropriate GitLab CE package URL
     #curl -sS https://packages.gitlab.com/install/repositories/gitlab/gitlab-ce/script.rpm.sh | sudo bash
-    sudo yum install -y gitlab-ce-$version
+    sudo dnf install -y gitlab-ce-$version
 
     # Start GitLab service
     sudo gitlab-ctl restart
 
     # Check GitLab status
     sudo gitlab-ctl status
+
+    # Clean downloaded packages
+    sudo dnf clean all
 }
 
 # # Iterate through each version passed as argument
@@ -87,8 +90,10 @@ upgrade_gitlab(){
 echo "Enter the GitLab CE versions you want to install, separated by spaces:"
 read -r input_versions
 
+cleaned_versions=$(echo "$input_versions" | tr '=>' ' ')
+
 # Iterate through each version entered by the user
-for version in $input_versions; do
+for version in $cleaned_versions; do
     install_gitlab "$version"
 done
 }
