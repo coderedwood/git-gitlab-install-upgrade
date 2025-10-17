@@ -31,7 +31,12 @@ USAGE
 }
 
 log(){
-    echo "$(date -u +%Y-%m-%dT%H:%M:%SZ) $*" | tee -a "$LOGFILE"
+    local msg
+    msg="$(date -u +%Y-%m-%dT%H:%M:%SZ) $*"
+    # try to append to logfile; on failure print to stdout
+    if ! printf '%s\n' "$msg" >>"$LOGFILE" 2>/dev/null; then
+        printf '%s\n' "$msg"
+    fi
 }
 
 if [ "${1:-}" = "--dry-run" ]; then
@@ -52,8 +57,6 @@ if [[ $EUID -ne 0 && $DRY_RUN -ne 1 ]]; then
 fi
 
 # Preflight checks
-log "Starting GitLab upgrade script"
-
 if [ "$DRY_RUN" -eq 1 ]; then
     log "DRY-RUN: skipping platform package manager and gitlab-ctl checks"
     mkdir -p ./logs
@@ -62,6 +65,8 @@ else
     command -v yum >/dev/null 2>&1 || command -v dnf >/dev/null 2>&1 || { log "No yum/dnf found. Unsupported platform."; exit 3; }
     command -v gitlab-ctl >/dev/null 2>&1 || { log "gitlab-ctl not found in PATH. Is GitLab installed?"; exit 4; }
 fi
+
+log "Starting GitLab upgrade script"
 
 # Check free disk space (simple check on /var)
 avail_kb=$(df --output=avail /var | tail -n1 | tr -d ' ')
