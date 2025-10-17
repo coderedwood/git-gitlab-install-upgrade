@@ -42,8 +42,10 @@ if [ $# -lt 1 ]; then
     exit 2
 fi
 
-if [[ $EUID -ne 0 ]]; then
-   echo "This script must be run as root (or via sudo)"
+# Only require root when performing real operations. Allow --dry-run to be used
+# by non-root users for testing/CI purposes.
+if [[ $EUID -ne 0 && $DRY_RUN -ne 1 ]]; then
+   echo "This script must be run as root (or via sudo). Use --dry-run to run without root for testing."
    exit 1
 fi
 
