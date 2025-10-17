@@ -9,8 +9,10 @@ if [ ! -f upgrade-gitlab.sh.orig ]; then
     cp -- upgrade-gitlab.sh upgrade-gitlab.sh.orig || true
 fi
 
-LOGFILE="/var/log/gitlab-upgrade-$(date +%Y%m%d%H%M%S).log"
 DRY_RUN=0
+# Default logfile path - may be overridden for dry-run to a local path
+DEFAULT_LOGDIR="/var/log"
+LOGFILE="${DEFAULT_LOGDIR}/gitlab-upgrade-$(date +%Y%m%d%H%M%S).log"
 
 usage(){
     cat <<USAGE
@@ -52,8 +54,14 @@ fi
 # Preflight checks
 log "Starting GitLab upgrade script"
 
-command -v yum >/dev/null 2>&1 || command -v dnf >/dev/null 2>&1 || { log "No yum/dnf found. Unsupported platform."; exit 3; }
-command -v gitlab-ctl >/dev/null 2>&1 || { log "gitlab-ctl not found in PATH. Is GitLab installed?"; exit 4; }
+if [ "$DRY_RUN" -eq 1 ]; then
+    log "DRY-RUN: skipping platform package manager and gitlab-ctl checks"
+    mkdir -p ./logs
+    LOGFILE="./logs/gitlab-upgrade-$(date +%Y%m%d%H%M%S).log"
+else
+    command -v yum >/dev/null 2>&1 || command -v dnf >/dev/null 2>&1 || { log "No yum/dnf found. Unsupported platform."; exit 3; }
+    command -v gitlab-ctl >/dev/null 2>&1 || { log "gitlab-ctl not found in PATH. Is GitLab installed?"; exit 4; }
+fi
 
 # Check free disk space (simple check on /var)
 avail_kb=$(df --output=avail /var | tail -n1 | tr -d ' ')
@@ -78,6 +86,9 @@ fi
 # Helper to check whether a package version is available in repos
 pkg_available(){
     local pkg="$1"
+    if [ "$DRY_RUN" -eq 1 ]; then
+        return 0
+    fi
     if command -v yum >/dev/null 2>&1; then
         yum --quiet --showduplicates list "$pkg" 2>/dev/null | grep -q "$pkg" || return 1
     elif command -v dnf >/dev/null 2>&1; then
