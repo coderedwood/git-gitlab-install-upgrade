@@ -148,13 +148,18 @@ fi
 # Helper to check whether a package version is available in repos
 pkg_available(){
     local pkg="$1"
+    local basepkg version
     if [ "$DRY_RUN" -eq 1 ]; then
         return 0
     fi
+
+    basepkg="${pkg%%-*}"
+    version="${pkg#${basepkg}-}"
+
     if command -v yum >/dev/null 2>&1; then
-        yum --quiet --showduplicates list "$pkg" 2>/dev/null | grep -q "$pkg" || return 1
+        yum --quiet --showduplicates list "${basepkg}" 2>/dev/null | awk '{print $1, $2}' | grep -qE "^${basepkg}(\.[^[:space:]]+)?[[:space:]]+${version}([-.]|$)" || return 1
     elif command -v dnf >/dev/null 2>&1; then
-        dnf --quiet --showduplicates list "$pkg" 2>/dev/null | grep -q "$pkg" || return 1
+        dnf --quiet --showduplicates list "${basepkg}" 2>/dev/null | awk '{print $1, $2}' | grep -qE "^${basepkg}(\.[^[:space:]]+)?[[:space:]]+${version}([-.]|$)" || return 1
     else
         return 1
     fi
@@ -168,7 +173,7 @@ install_and_reconfigure(){
 
     if [ "$DRY_RUN" -eq 1 ]; then
         log "DRY-RUN: would check availability of ${pkgname}"
-        log "DRY-RUN: would run: yum/dnf install -y ${pkgname}"
+        log "DRY-RUN: would run: yum/dnf install -y ${pkgname}*"
         log "DRY-RUN: would run: gitlab-ctl reconfigure && gitlab-ctl restart && gitlab-ctl status"
         return 0
     fi
@@ -180,13 +185,13 @@ install_and_reconfigure(){
 
     if command -v yum >/dev/null 2>&1; then
         log "Installing ${pkgname} with yum"
-        if ! yum install -y "$pkgname" >>"$LOGFILE" 2>&1; then
+        if ! yum install -y "${pkgname}*" >>"$LOGFILE" 2>&1; then
             log "Failed to install ${pkgname}. See $LOGFILE"
             return 1
         fi
     else
         log "Installing ${pkgname} with dnf"
-        if ! dnf install -y "$pkgname" >>"$LOGFILE" 2>&1; then
+        if ! dnf install -y "${pkgname}*" >>"$LOGFILE" 2>&1; then
             log "Failed to install ${pkgname}. See $LOGFILE"
             return 1
         fi
