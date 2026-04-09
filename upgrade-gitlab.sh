@@ -103,6 +103,43 @@ else
     fi
 fi
 
+if ! detect_package_type; then
+    exit 5
+fi
+
+detect_package_type(){
+    if [ "$DRY_RUN" -eq 1 ]; then
+        PACKAGE_TYPE="gitlab-ce"
+        return 0
+    fi
+
+    if command -v rpm >/dev/null 2>&1; then
+        if rpm -q gitlab-ce >/dev/null 2>&1; then
+            PACKAGE_TYPE="gitlab-ce"
+        elif rpm -q gitlab-ee >/dev/null 2>&1; then
+            PACKAGE_TYPE="gitlab-ee"
+        else
+            local installed_pkg
+            installed_pkg=$(rpm -qa | grep -E '^gitlab-(ce|ee)(-|$)' | head -n1 || true)
+            if [ -n "$installed_pkg" ]; then
+                if [[ "$installed_pkg" == gitlab-ee* ]]; then
+                    PACKAGE_TYPE="gitlab-ee"
+                else
+                    PACKAGE_TYPE="gitlab-ce"
+                fi
+            else
+                log "Unable to detect installed GitLab package type. Please ensure gitlab-ce or gitlab-ee is installed."
+                return 1
+            fi
+        fi
+    else
+        log "RPM is not available; cannot detect installed GitLab package type."
+        return 1
+    fi
+
+    log "Detected installed GitLab package type: ${PACKAGE_TYPE}"
+}
+
 # Helper to check whether a package version is available in repos
 pkg_available(){
     local pkg="$1"
@@ -121,7 +158,7 @@ pkg_available(){
 # Install and reconfigure step
 install_and_reconfigure(){
     local version="$1"
-    local pkgname="gitlab-ce-${version}"
+    local pkgname="${PACKAGE_TYPE}-${version}"
     log "Processing version ${version}"
 
     if [ "$DRY_RUN" -eq 1 ]; then
