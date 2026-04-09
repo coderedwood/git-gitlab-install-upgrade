@@ -18,7 +18,9 @@ usage(){
     cat <<USAGE
 Usage: $0 [--dry-run] <version1> [version2 ...]
 
-Example: sudo $0 10.1.2 11.6.4 12.4.4
+Examples:
+  $0 10.1.2 11.6.4 12.4.4
+  $0 "10.1.2 => 11.6.4 => 12.4.4"
 
 This script will:
  - perform lightweight preflight checks
@@ -45,6 +47,12 @@ log(){
 if [ "${1:-}" = "--dry-run" ]; then
     DRY_RUN=1
     shift
+fi
+
+# Handle versions separated by "=>" if passed as a single argument
+if [ $# -eq 1 ] && [[ "$1" == *" => "* ]]; then
+    VERSIONS=($(echo "$1" | sed 's/ *=> */ /g'))
+    set -- "${VERSIONS[@]}"
 fi
 
 if [ $# -lt 1 ]; then
