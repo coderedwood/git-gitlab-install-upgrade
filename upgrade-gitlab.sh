@@ -4,6 +4,11 @@
 
 set -euo pipefail
 
+if [ -z "${BASH_VERSION:-}" ]; then
+    echo "This script requires bash. Run it with: bash $0 [--dry-run] <version1> [version2 ...]"
+    exit 1
+fi
+
 # Back up the original script if not already backed up
 if [ ! -f upgrade-gitlab.sh.orig ]; then
     cp -- upgrade-gitlab.sh upgrade-gitlab.sh.orig || true
@@ -103,10 +108,6 @@ else
     fi
 fi
 
-if ! detect_package_type; then
-    exit 5
-fi
-
 detect_package_type(){
     if [ "$DRY_RUN" -eq 1 ]; then
         PACKAGE_TYPE="gitlab-ce"
@@ -139,6 +140,10 @@ detect_package_type(){
 
     log "Detected installed GitLab package type: ${PACKAGE_TYPE}"
 }
+
+if ! detect_package_type; then
+    exit 5
+fi
 
 # Helper to check whether a package version is available in repos
 pkg_available(){
