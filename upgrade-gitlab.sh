@@ -33,8 +33,11 @@ USAGE
 log(){
     local msg
     msg="$(date -u +%Y-%m-%dT%H:%M:%SZ) $*"
-    # try to append to logfile; on failure print to stdout
-    if ! printf '%s\n' "$msg" >>"$LOGFILE" 2>/dev/null; then
+    if printf '%s\n' "$msg" >>"$LOGFILE" 2>/dev/null; then
+        if [ "$DRY_RUN" -eq 1 ]; then
+            printf '%s\n' "$msg"
+        fi
+    else
         printf '%s\n' "$msg"
     fi
 }
@@ -58,9 +61,9 @@ fi
 
 # Preflight checks
 if [ "$DRY_RUN" -eq 1 ]; then
-    log "DRY-RUN: skipping platform package manager and gitlab-ctl checks"
     mkdir -p ./logs
     LOGFILE="./logs/gitlab-upgrade-$(date +%Y%m%d%H%M%S).log"
+    log "DRY-RUN: skipping platform package manager and gitlab-ctl checks"
 else
     command -v yum >/dev/null 2>&1 || command -v dnf >/dev/null 2>&1 || { log "No yum/dnf found. Unsupported platform."; exit 3; }
     command -v gitlab-ctl >/dev/null 2>&1 || { log "gitlab-ctl not found in PATH. Is GitLab installed?"; exit 4; }
@@ -69,9 +72,16 @@ fi
 log "Starting GitLab upgrade script"
 
 # Check free disk space (simple check on /var)
-avail_kb=$(df --output=avail /var | tail -n1 | tr -d ' ')
-if [ "$avail_kb" -lt 524288 ]; then
-    log "Warning: less than 512MB available on /var. Upgrades may fail. Available KB=$avail_kb"
+if [ "$DRY_RUN" -ne 1 ]; then
+    if avail_kb=$(df --output=avail /var 2>/dev/null | tail -n1 | tr -d ' '); then
+        if [ "$avail_kb" -lt 524288 ]; then
+            log "Warning: less than 512MB available on /var. Upgrades may fail. Available KB=$avail_kb"
+        fi
+    else
+        log "Warning: unable to determine available disk space on /var. Skipping disk check."
+    fi
+else
+    log "DRY-RUN: skipping disk space check"
 fi
 
 # Attempt to create a backup (best-effort)
@@ -109,7 +119,7 @@ install_and_reconfigure(){
     local pkgname="gitlab-ce-${version}"
     log "Processing version ${version}"
 
-    if [ $DRY_RUN -eq 1 ]; then
+    if [ "$DRY_RUN" -eq 1 ]; then
         log "DRY-RUN: would check availability of ${pkgname}"
         log "DRY-RUN: would run: yum/dnf install -y ${pkgname}"
         log "DRY-RUN: would run: gitlab-ctl reconfigure && gitlab-ctl restart && gitlab-ctl status"
@@ -117,27 +127,43 @@ install_and_reconfigure(){
     fi
 
     if ! pkg_available "$pkgname"; then
-        log "Package ${pkgname} not found in configured repos. Aborting."; return 10
+        log "Package ${pkgname} not found in configured repos. Aborting."
+        return 1
     fi
 
     if command -v yum >/dev/null 2>&1; then
         log "Installing ${pkgname} with yum"
-        yum install -y "$pkgname" >>"$LOGFILE" 2>&1
+        if ! yum install -y "$pkgname" >>"$LOGFILE" 2>&1; then
+            log "Failed to install ${pkgname}. See $LOGFILE"
+            return 1
+        fi
     else
         log "Installing ${pkgname} with dnf"
-        dnf install -y "$pkgname" >>"$LOGFILE" 2>&1
+        if ! dnf install -y "$pkgname" >>"$LOGFILE" 2>&1; then
+            log "Failed to install ${pkgname}. See $LOGFILE"
+            return 1
+        fi
     fi
 
     log "Running gitlab-ctl reconfigure"
     if ! gitlab-ctl reconfigure >>"$LOGFILE" 2>&1; then
         log "gitlab-ctl reconfigure failed — check $LOGFILE"
+        return 1
     fi
 
     log "Restarting GitLab services"
-    gitlab-ctl restart >>"$LOGFILE" 2>&1 || log "gitlab-ctl restart returned non-zero"
+    if ! gitlab-ctl restart >>"$LOGFILE" 2>&1; then
+        log "gitlab-ctl restart returned non-zero"
+        return 1
+    fi
 
     log "Checking GitLab status"
-    gitlab-ctl status >>"$LOGFILE" 2>&1 || log "gitlab-ctl status returned non-zero"
+    if ! gitlab-ctl status >>"$LOGFILE" 2>&1; then
+        log "gitlab-ctl status returned non-zero"
+        return 1
+    fi
+
+    return 0
 }
 
 # Iterate through versions
