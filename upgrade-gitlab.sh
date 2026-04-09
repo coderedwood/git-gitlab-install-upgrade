@@ -165,9 +165,15 @@ pkg_available(){
     fi
 
     if command -v yum >/dev/null 2>&1; then
-        yum --quiet --showduplicates list "${basepkg}" 2>/dev/null | awk '{print $1, $2}' | grep -qE "^${basepkg}(\.[^[:space:]]+)?[[:space:]]+${version}([-.]|$)" || return 1
+        if yum --quiet list available "${pkg}*" 2>/dev/null | grep -qE "^${basepkg}(\.[^[:space:]]+)?[[:space:]]+${version}([-.]|$)"; then
+            return 0
+        fi
+        yum --quiet list available "${basepkg}" 2>/dev/null | awk '{print $1, $2}' | grep -qE "^${basepkg}(\.[^[:space:]]+)?[[:space:]]+${version}([-.]|$)" || return 1
     elif command -v dnf >/dev/null 2>&1; then
-        dnf --quiet --showduplicates list "${basepkg}" 2>/dev/null | awk '{print $1, $2}' | grep -qE "^${basepkg}(\.[^[:space:]]+)?[[:space:]]+${version}([-.]|$)" || return 1
+        if dnf --quiet list available "${pkg}*" 2>/dev/null | grep -qE "^${basepkg}(\.[^[:space:]]+)?[[:space:]]+${version}([-.]|$)"; then
+            return 0
+        fi
+        dnf --quiet list available "${basepkg}" 2>/dev/null | awk '{print $1, $2}' | grep -qE "^${basepkg}(\.[^[:space:]]+)?[[:space:]]+${version}([-.]|$)" || return 1
     else
         return 1
     fi
