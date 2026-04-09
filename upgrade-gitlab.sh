@@ -153,8 +153,16 @@ pkg_available(){
         return 0
     fi
 
-    basepkg="${pkg%%-*}"
-    version="${pkg#${basepkg}-}"
+    if [[ "$pkg" == gitlab-ce-* ]]; then
+        basepkg="gitlab-ce"
+        version="${pkg#gitlab-ce-}"
+    elif [[ "$pkg" == gitlab-ee-* ]]; then
+        basepkg="gitlab-ee"
+        version="${pkg#gitlab-ee-}"
+    else
+        log "Unable to parse package name '${pkg}'."
+        return 1
+    fi
 
     if command -v yum >/dev/null 2>&1; then
         yum --quiet --showduplicates list "${basepkg}" 2>/dev/null | awk '{print $1, $2}' | grep -qE "^${basepkg}(\.[^[:space:]]+)?[[:space:]]+${version}([-.]|$)" || return 1
