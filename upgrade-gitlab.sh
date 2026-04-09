@@ -35,12 +35,9 @@ USAGE
 log(){
     local msg
     msg="$(date -u +%Y-%m-%dT%H:%M:%SZ) $*"
-    if printf '%s\n' "$msg" >>"$LOGFILE" 2>/dev/null; then
-        if [ "$DRY_RUN" -eq 1 ]; then
-            printf '%s\n' "$msg"
-        fi
-    else
-        printf '%s\n' "$msg"
+    printf '%s\n' "$msg"
+    if ! printf '%s\n' "$msg" >>"$LOGFILE" 2>/dev/null; then
+        >&2 printf 'WARNING: could not write log file %s\n' "$LOGFILE"
     fi
 }
 
