@@ -14,11 +14,11 @@ if [ $EXIT -ne 0 ]; then
   exit 2
 fi
 
-if echo "$OUTPUT" | grep -q "DRY-RUN"; then
+if echo "$OUTPUT" | grep -q "Starting GitLab upgrade script" && echo "$OUTPUT" | grep -q "Processing version 99.9.9"; then
   echo "Dry-run output looks good"
   exit 0
 else
-  echo "Dry-run did not produce expected DRY-RUN messages"
+  echo "Dry-run did not produce expected progress messages"
   echo "$OUTPUT"
   exit 3
 fi

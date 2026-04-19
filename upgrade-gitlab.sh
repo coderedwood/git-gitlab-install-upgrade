@@ -73,10 +73,13 @@ fi
 if [ "$DRY_RUN" -eq 1 ]; then
     mkdir -p ./logs
     LOGFILE="./logs/gitlab-upgrade-$(date +%Y%m%d%H%M%S).log"
+    log "DRY-RUN: running in dry-run mode"
     log "DRY-RUN: skipping platform package manager and gitlab-ctl checks"
 else
+    log "Checking required tools: yum/dnf and gitlab-ctl"
     command -v yum >/dev/null 2>&1 || command -v dnf >/dev/null 2>&1 || { log "No yum/dnf found. Unsupported platform."; exit 3; }
     command -v gitlab-ctl >/dev/null 2>&1 || { log "gitlab-ctl not found in PATH. Is GitLab installed?"; exit 4; }
+    log "Found required tools and confirmed GitLab is installed"
 fi
 
 log "Starting GitLab upgrade script"
@@ -102,6 +105,8 @@ else
         log "Creating GitLab backup via gitlab-rake gitlab:backup:create"
         if ! gitlab-rake gitlab:backup:create >>"$LOGFILE" 2>&1; then
             log "Backup command failed — continuing cautiously. Check $LOGFILE"
+        else
+            log "GitLab backup completed successfully"
         fi
     else
         log "gitlab-rake not available; skipping automated backup. Make sure you have a manual backup."
@@ -109,8 +114,10 @@ else
 fi
 
 detect_package_type(){
+    log "Detecting installed GitLab package type"
     if [ "$DRY_RUN" -eq 1 ]; then
         PACKAGE_TYPE="gitlab-ce"
+        log "DRY-RUN: assuming installed GitLab package type ${PACKAGE_TYPE}"
         return 0
     fi
 
@@ -145,6 +152,8 @@ if ! detect_package_type; then
     exit 5
 fi
 
+log "Versions to process: $*"
+
 # Helper to check whether a package version is available in repos
 pkg_available(){
     local pkg="$1"
@@ -153,6 +162,7 @@ pkg_available(){
         return 0
     fi
 
+    log "Checking availability of package ${pkg}"
     if [[ "$pkg" == gitlab-ce-* ]]; then
         basepkg="gitlab-ce"
         version="${pkg#gitlab-ce-}"
@@ -165,15 +175,15 @@ pkg_available(){
     fi
 
     if command -v yum >/dev/null 2>&1; then
-        if yum  list available "${pkg}*" 2>/dev/null | grep -qE "^${basepkg}(\.[^[:space:]]+)?[[:space:]]+${version}([-.]|$)"; then
+        if yum --quiet list available "${pkg}*" 2>/dev/null | grep -qE "^${basepkg}(\.[^[:space:]]+)?[[:space:]]+${version}([-.]|$)"; then
             return 0
         fi
-        yum  list available "${basepkg}" 2>/dev/null | awk '{print $1, $2}' | grep -qE "^${basepkg}(\.[^[:space:]]+)?[[:space:]]+${version}([-.]|$)" || return 1
+        yum --quiet list available "${basepkg}" 2>/dev/null | awk '{print $1, $2}' | grep -qE "^${basepkg}(\.[^[:space:]]+)?[[:space:]]+${version}([-.]|$)" || return 1
     elif command -v dnf >/dev/null 2>&1; then
-        if dnf  list available "${pkg}*" 2>/dev/null | grep -qE "^${basepkg}(\.[^[:space:]]+)?[[:space:]]+${version}([-.]|$)"; then
+        if dnf --quiet list available "${pkg}*" 2>/dev/null | grep -qE "^${basepkg}(\.[^[:space:]]+)?[[:space:]]+${version}([-.]|$)"; then
             return 0
         fi
-        dnf  list available "${basepkg}" 2>/dev/null | awk '{print $1, $2}' | grep -qE "^${basepkg}(\.[^[:space:]]+)?[[:space:]]+${version}([-.]|$)" || return 1
+        dnf --quiet list available "${basepkg}" 2>/dev/null | awk '{print $1, $2}' | grep -qE "^${basepkg}(\.[^[:space:]]+)?[[:space:]]+${version}([-.]|$)" || return 1
     else
         return 1
     fi
@@ -189,6 +199,7 @@ install_and_reconfigure(){
         log "DRY-RUN: would check availability of ${pkgname}"
         log "DRY-RUN: would run: yum/dnf install -y ${pkgname}*"
         log "DRY-RUN: would run: gitlab-ctl reconfigure && gitlab-ctl restart && gitlab-ctl status"
+        log "DRY-RUN: would complete processing version ${version}"
         return 0
     fi
 
@@ -196,6 +207,7 @@ install_and_reconfigure(){
         log "Package ${pkgname} not found in configured repos. Aborting."
         return 1
     fi
+    log "Package ${pkgname} is available in configured repos"
 
     if command -v yum >/dev/null 2>&1; then
         log "Installing ${pkgname} with yum"
@@ -210,24 +222,28 @@ install_and_reconfigure(){
             return 1
         fi
     fi
+    log "Installation of ${pkgname} completed"
 
     log "Running gitlab-ctl reconfigure"
     if ! gitlab-ctl reconfigure >>"$LOGFILE" 2>&1; then
         log "gitlab-ctl reconfigure failed — check $LOGFILE"
         return 1
     fi
+    log "gitlab-ctl reconfigure completed"
 
     log "Restarting GitLab services"
     if ! gitlab-ctl restart >>"$LOGFILE" 2>&1; then
         log "gitlab-ctl restart returned non-zero"
         return 1
     fi
+    log "GitLab services restart completed"
 
     log "Checking GitLab status"
     if ! gitlab-ctl status >>"$LOGFILE" 2>&1; then
         log "gitlab-ctl status returned non-zero"
         return 1
     fi
+    log "GitLab status check completed for version ${version}"
 
     return 0
 }
