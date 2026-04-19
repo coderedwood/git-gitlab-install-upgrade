@@ -46,6 +46,21 @@ log(){
     fi
 }
 
+run_and_log(){
+    local cmd=("$@")
+    local cmd_desc
+    cmd_desc="$(printf ' %q' "${cmd[@]}")"
+    log "Executing:${cmd_desc}"
+    if [ "$DRY_RUN" -eq 1 ]; then
+        log "DRY-RUN: would run:${cmd_desc}"
+        return 0
+    fi
+    if "${cmd[@]}" 2>&1 | tee -a "$LOGFILE"; then
+        return 0
+    fi
+    return $?
+}
+
 if [ "${1:-}" = "--dry-run" ]; then
     DRY_RUN=1
     shift
@@ -103,7 +118,7 @@ if [ $DRY_RUN -eq 1 ]; then
 else
     if command -v gitlab-rake >/dev/null 2>&1; then
         log "Creating GitLab backup via gitlab-rake gitlab:backup:create"
-        if ! gitlab-rake gitlab:backup:create >>"$LOGFILE" 2>&1; then
+        if ! run_and_log gitlab-rake gitlab:backup:create; then
             log "Backup command failed — continuing cautiously. Check $LOGFILE"
         else
             log "GitLab backup completed successfully"
@@ -211,13 +226,13 @@ install_and_reconfigure(){
 
     if command -v yum >/dev/null 2>&1; then
         log "Installing ${pkgname} with yum"
-        if ! yum install -y "${pkgname}*" >>"$LOGFILE" 2>&1; then
+        if ! run_and_log yum install -y "${pkgname}*"; then
             log "Failed to install ${pkgname}. See $LOGFILE"
             return 1
         fi
     else
         log "Installing ${pkgname} with dnf"
-        if ! dnf install -y "${pkgname}*" >>"$LOGFILE" 2>&1; then
+        if ! run_and_log dnf install -y "${pkgname}*"; then
             log "Failed to install ${pkgname}. See $LOGFILE"
             return 1
         fi
@@ -225,21 +240,21 @@ install_and_reconfigure(){
     log "Installation of ${pkgname} completed"
 
     log "Running gitlab-ctl reconfigure"
-    if ! gitlab-ctl reconfigure >>"$LOGFILE" 2>&1; then
+    if ! run_and_log gitlab-ctl reconfigure; then
         log "gitlab-ctl reconfigure failed — check $LOGFILE"
         return 1
     fi
     log "gitlab-ctl reconfigure completed"
 
     log "Restarting GitLab services"
-    if ! gitlab-ctl restart >>"$LOGFILE" 2>&1; then
+    if ! run_and_log gitlab-ctl restart; then
         log "gitlab-ctl restart returned non-zero"
         return 1
     fi
     log "GitLab services restart completed"
 
     log "Checking GitLab status"
-    if ! gitlab-ctl status >>"$LOGFILE" 2>&1; then
+    if ! run_and_log gitlab-ctl status; then
         log "gitlab-ctl status returned non-zero"
         return 1
     fi
