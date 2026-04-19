@@ -282,9 +282,23 @@ install_and_reconfigure(){
     log "gitlab-ctl reconfigure completed"
 
     log "Restarting GitLab services"
-    if ! run_and_log gitlab-ctl restart; then
-        log "gitlab-ctl restart returned non-zero"
-        return 1
+    local restart_attempts=3
+    local restart_success=0
+    for attempt in $(seq 1 "$restart_attempts"); do
+        log "Restart attempt $attempt of $restart_attempts"
+        if run_and_log gitlab-ctl restart; then
+            restart_success=1
+            break
+        else
+            log "gitlab-ctl restart attempt $attempt failed"
+            if [ "$attempt" -lt "$restart_attempts" ]; then
+                log "Waiting 10 seconds before retry..."
+                sleep 10
+            fi
+        fi
+    done
+    if [ "$restart_success" -eq 0 ]; then
+        log "All restart attempts failed; proceeding to status check"
     fi
     log "GitLab services restart completed"
 
