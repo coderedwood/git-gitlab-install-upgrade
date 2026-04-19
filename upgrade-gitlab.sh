@@ -55,10 +55,8 @@ run_and_log(){
         log "DRY-RUN: would run:${cmd_desc}"
         return 0
     fi
-    if "${cmd[@]}" 2>&1 | tee -a "$LOGFILE"; then
-        return 0
-    fi
-    return $?
+    script -q -c "${cmd[*]}" /dev/null 2>&1 | tee -a "$LOGFILE"
+    return ${PIPESTATUS[0]}
 }
 
 if [ "${1:-}" = "--dry-run" ]; then
