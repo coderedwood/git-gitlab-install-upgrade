@@ -275,8 +275,23 @@ install_and_reconfigure(){
     log "Installation of ${pkgname} completed"
 
     log "Running gitlab-ctl reconfigure"
-    if ! run_and_log gitlab-ctl reconfigure; then
-        log "gitlab-ctl reconfigure failed — check $LOGFILE"
+    local reconfigure_attempts=3
+    local reconfigure_success=0
+    for attempt in $(seq 1 "$reconfigure_attempts"); do
+        log "Reconfigure attempt $attempt of $reconfigure_attempts"
+        if run_and_log gitlab-ctl reconfigure; then
+            reconfigure_success=1
+            break
+        else
+            log "gitlab-ctl reconfigure attempt $attempt failed"
+            if [ "$attempt" -lt "$reconfigure_attempts" ]; then
+                log "Waiting 10 seconds before retry..."
+                sleep 10
+            fi
+        fi
+    done
+    if [ "$reconfigure_success" -eq 0 ]; then
+        log "All reconfigure attempts failed"
         return 1
     fi
     log "gitlab-ctl reconfigure completed"
