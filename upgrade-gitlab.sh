@@ -303,8 +303,23 @@ install_and_reconfigure(){
     log "GitLab services restart completed"
 
     log "Checking GitLab status"
-    if ! run_and_log gitlab-ctl status; then
-        log "gitlab-ctl status returned non-zero"
+    local status_attempts=5
+    local status_success=0
+    for attempt in $(seq 1 "$status_attempts"); do
+        log "Status check attempt $attempt of $status_attempts"
+        if run_and_log gitlab-ctl status; then
+            status_success=1
+            break
+        else
+            log "gitlab-ctl status attempt $attempt returned non-zero (some services may still be starting)"
+            if [ "$attempt" -lt "$status_attempts" ]; then
+                log "Waiting 5 seconds before retry..."
+                sleep 5
+            fi
+        fi
+    done
+    if [ "$status_success" -eq 0 ]; then
+        log "Status checks failed after $status_attempts attempts"
         return 1
     fi
     log "GitLab status check completed for version ${version}"
