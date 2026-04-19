@@ -48,15 +48,35 @@ log(){
 
 run_and_log(){
     local cmd=("$@")
-    local cmd_desc
+    local cmd_desc status
     cmd_desc="$(printf ' %q' "${cmd[@]}")"
     log "Executing:${cmd_desc}"
     if [ "$DRY_RUN" -eq 1 ]; then
         log "DRY-RUN: would run:${cmd_desc}"
         return 0
     fi
-    script -q -c "${cmd[*]}" /dev/null 2>&1 | tee -a "$LOGFILE"
-    return ${PIPESTATUS[0]}
+
+    if command -v script >/dev/null 2>&1; then
+        if script -q -c "${cmd[*]}" /dev/null 2>&1 | tee -a "$LOGFILE"; then
+            status=0
+        else
+            status=${PIPESTATUS[0]}
+            log "Interactive capture via script failed with status ${status}; falling back to direct output"
+            if "${cmd[@]}" 2>&1 | tee -a "$LOGFILE"; then
+                status=0
+            else
+                status=${PIPESTATUS[0]}
+            fi
+        fi
+    else
+        if "${cmd[@]}" 2>&1 | tee -a "$LOGFILE"; then
+            status=0
+        else
+            status=${PIPESTATUS[0]}
+        fi
+    fi
+
+    return "$status"
 }
 
 if [ "${1:-}" = "--dry-run" ]; then
@@ -64,9 +84,26 @@ if [ "${1:-}" = "--dry-run" ]; then
     shift
 fi
 
-# Handle versions separated by "=>" if passed as a single argument
-if [ $# -eq 1 ] && [[ "$1" == *" => "* ]]; then
-    VERSIONS=($(echo "$1" | sed 's/ *=> */ /g'))
+# Handle versions separated by "=>" if passed as a single argument or across multiple args
+NEEDS_NORMALIZE=0
+for arg in "$@"; do
+    if [ "$arg" = "=>" ] || [[ "$arg" == *"=>"* ]]; then
+        NEEDS_NORMALIZE=1
+        break
+    fi
+done
+
+if [ "$NEEDS_NORMALIZE" -eq 1 ]; then
+    VERSIONS=()
+    for arg in "$@"; do
+        if [ "$arg" = "=>" ]; then
+            continue
+        fi
+        arg="${arg//=>/ }"
+        for version in $arg; do
+            VERSIONS+=("$version")
+        done
+    done
     set -- "${VERSIONS[@]}"
 fi
 
