@@ -265,12 +265,16 @@ install_and_reconfigure(){
             log "Failed to install ${pkgname}. See $LOGFILE"
             return 1
         fi
+        log "Cleaning yum package cache after install"
+        run_and_log yum clean packages
     else
         log "Installing ${pkgname} with dnf"
         if ! run_and_log dnf install -y "${pkgname}*"; then
             log "Failed to install ${pkgname}. See $LOGFILE"
             return 1
         fi
+        log "Cleaning dnf package cache after install"
+        run_and_log dnf clean packages
     fi
     log "Installation of ${pkgname} completed"
 
