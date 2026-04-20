@@ -274,6 +274,14 @@ install_and_reconfigure(){
     fi
     log "Installation of ${pkgname} completed"
 
+    log "Applying SELinux workaround before reconfigure"
+    if [ "$DRY_RUN" -eq 1 ]; then
+        log "DRY-RUN: would patch selinux recipe and disable enforcement"
+    else
+        run_and_log bash -lc 'if ! grep -q "not_if { true }" /opt/gitlab/embedded/cookbooks/gitlab/recipes/selinux.rb; then sed -i "/bash \"Set proper security context on ssh files for selinux\" do/a \\  not_if { true }" /opt/gitlab/embedded/cookbooks/gitlab/recipes/selinux.rb; fi'
+        run_and_log setenforce 0 || log "setenforce failed or is not available; continuing"
+    fi
+
     log "Running gitlab-ctl reconfigure"
     local reconfigure_attempts=3
     local reconfigure_success=0
