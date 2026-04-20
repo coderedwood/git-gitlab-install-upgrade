@@ -1,8 +1,8 @@
 #Install Postfix dependency for GitLab-CE
 install_postfix(){
-    dnf update
-    dnf install postfix -y
-    sudo systemctl enable --now postfix
+    $SUDO dnf update
+    $SUDO dnf install postfix -y
+    $SUDO systemctl enable --now postfix
 }
 
 #Install Gitlab
@@ -10,15 +10,31 @@ install_gitlab(){
     curl -O https://packages.gitlab.com/install/repositories/gitlab/gitlab-ce/script.rpm.sh
     chmod +x script.rpm.sh
     os=el dist=8 ./script.rpm.sh
-    sudo dnf install gitlab-ce -y
+    $SUDO dnf install gitlab-ce-${VERSION} -y
 }
 
 #Add exceptions to http and https ports
 enable_web(){
-    sudo firewall-cmd --permanent --add-service=http
-    sudo firewall-cmd --permanent --add-service=https
-    sudo systemctl reload firewalld
+    $SUDO firewall-cmd --permanent --add-service=http
+    $SUDO firewall-cmd --permanent --add-service=https
+    $SUDO systemctl reload firewalld
 }
+
+# Check if version is provided
+if [ $# -ne 1 ]; then
+    echo "Usage: $0 <version>"
+    echo "Example: $0 17.8.2"
+    exit 1
+fi
+
+VERSION=$1
+
+# Determine if sudo is needed
+if [[ $EUID -eq 0 ]]; then
+    SUDO=""
+else
+    SUDO="sudo"
+fi
 
 #Main script
 install_postfix
