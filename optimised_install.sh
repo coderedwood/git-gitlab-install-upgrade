@@ -1,11 +1,11 @@
 #Install Postfix (a gitlab dependency) and devel dependencies (to compile git from source) for GitLab-CE
 install_dependecies(){
     echo "Installing Dependencies";
-    sudo dnf update
-    sudo dnf groupinstall 'Development Tools' -y;
-    sudo dnf install curl-devel expat-devel gettext-devel openssl-devel zlib-devel perl-CPAN perl-devel wget gcc autoconf postfix -y;
-    sudo dnf clean all;
-    sudo systemctl enable --now postfix;
+    $SUDO dnf update
+    $SUDO dnf groupinstall 'Development Tools' -y;
+    $SUDO dnf install curl-devel expat-devel gettext-devel openssl-devel zlib-devel perl-CPAN perl-devel wget gcc autoconf postfix -y;
+    $SUDO dnf clean all;
+    $SUDO systemctl enable --now postfix;
 }
 
 ##########This is a script to fetch git from github source via curl on CentOS 8 / RedHat 8 / Oracle Linux Server 8 ##############
@@ -31,7 +31,7 @@ install_git(){
     echo "Building from source files";
     make configure;
     ./configure --prefix=/usr/local;
-    sudo make all && sudo make install;
+    $SUDO make all && $SUDO make install;
 }
 
 #Install Gitlab Repositories and Gitlab-ce
@@ -39,15 +39,22 @@ install_gitlab(){
     curl -O https://packages.gitlab.com/install/repositories/gitlab/gitlab-ce/script.rpm.sh;
     chmod +x script.rpm.sh;
     os=el dist=8 ./script.rpm.sh;
-    sudo dnf install gitlab-ce -y;
+    $SUDO dnf install gitlab-ce -y;
 }
 
 #Add exceptions to http and https ports
 enable_web(){
-    sudo firewall-cmd --permanent --add-service=http;
-    sudo firewall-cmd --permanent --add-service=https;
-    sudo systemctl reload firewalld;
+    $SUDO firewall-cmd --permanent --add-service=http;
+    $SUDO firewall-cmd --permanent --add-service=https;
+    $SUDO systemctl reload firewalld;
 }
+
+# Determine if sudo is needed
+if [[ $EUID -eq 0 ]]; then
+    SUDO=""
+else
+    SUDO="sudo"
+fi
 
 #Main script procedure
 install_dependecies;
