@@ -3,10 +3,17 @@
 # Uncomment and comment accordingly lines 30-31 or lines 32 for version specific source
 # Line 32 pulls a larger directory vs pulling a release tag via lines 30-31
 ####################### Get Git via release tag via http #########################################
-fetch_git_version(){
-TAG=$(curl -s https://api.github.com/repos/git/git/tags | grep -i "name" | awk -F '"' '{print $4}' | head -n 1)
-TARBALL="git-${TAG}.tar.gz"
+# Initialize variables
+TAG=""
+TARBALL=""
 SRCDIR=""
+
+fetch_git_version(){
+    TAG=$(curl -s https://api.github.com/repos/git/git/tags | grep -i "name" | awk -F '"' '{print $4}' | head -n 1)
+    # Strip 'v' prefix for tarball naming (kernel.org uses git-2.54.0.tar.gz format)
+    local bare_tag="${TAG#v}"
+    TARBALL="git-${bare_tag}.tar.gz"
+}
 
 resolve_srctree(){
     if [ -n "$SRCDIR" ] && [ -d "$SRCDIR" ]; then
@@ -44,7 +51,6 @@ resolve_srctree(){
 
     SRCDIR="git-${TAG}"
 }
-}
 
 download_git(){
     echo "Fetching the latest Git release: ${TAG}"
@@ -59,7 +65,17 @@ download_git(){
         return 0
     fi
 
-    curl -L "https://github.com/git/git/archive/refs/tags/${TAG}.tar.gz" -o "$TARBALL"
+    # Download from kernel.org (official source with all build files)
+    # TAG is like "v2.54.0", need to strip the 'v' prefix for the filename
+    local bare_tag="${TAG#v}"
+    echo "Attempting to download from kernel.org..."
+    if curl -L "https://www.kernel.org/pub/software/scm/git/git-${bare_tag}.tar.gz" -o "$TARBALL"; then
+        echo "Downloaded successfully from kernel.org"
+    else
+        echo "Kernel.org download failed, trying GitHub releases..."
+        curl -L "https://github.com/git/git/releases/download/${TAG}/git-${bare_tag}.tar.gz" -o "$TARBALL" || \
+        curl -L "https://github.com/git/git/archive/refs/tags/${TAG}.tar.gz" -o "$TARBALL"
+    fi
 }
 
 extract_git(){
@@ -109,8 +125,9 @@ if [ "$EUID" -ne 0 ]; then
 fi
 
 #Main routine
-download_git;
-extract_git;
+fetch_git_version
+download_git
+extract_git
 # clone_git;
-install_git;
+install_git
 
