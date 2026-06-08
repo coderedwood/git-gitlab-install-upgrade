@@ -1,3 +1,4 @@
+#!/usr/bin/env bash
 ##########This is a script to install git from source on CentOS 7 / RedHat 7 ##############
 # Uncomment and comment accordingly lines 30-31 or lines 32 for version specific source
 # Line 32 pulls a larger directory vs pulling a release tag via lines 30-31
@@ -42,6 +43,7 @@ resolve_srctree(){
     fi
 
     SRCDIR="git-${TAG}"
+}
 }
 
 download_git(){
@@ -111,4 +113,4 @@ download_git;
 extract_git;
 # clone_git;
 install_git;
-remove_git_folder;
+
