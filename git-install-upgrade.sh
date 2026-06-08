@@ -107,8 +107,8 @@ if [ "$EUID" -ne 0 ]; then
 fi
 
 #Main routine
-# download_git;
-# extract_git;
-#clone_git;
-# install_git;
-# remove_git_folder;
+download_git;
+extract_git;
+# clone_git;
+install_git;
+remove_git_folder;
